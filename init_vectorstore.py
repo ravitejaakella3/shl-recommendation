@@ -1,0 +1,83 @@
+from sentence_transformers import SentenceTransformer
+import faiss
+import json
+import numpy as np
+import os
+
+# Define sample SHL assessments
+assessments = [
+    {
+        "name": "Java Programming Test",
+        "url": "https://www.shl.com/java-test",
+        "remote_testing": True,
+        "adaptive": True,
+        "test_types": ["Technical", "Programming"],
+        "description": "Assessment for Java developers with focus on core Java, Spring, and collaboration skills",
+        "duration": 40
+    },
+    {
+        "name": "Full Stack Developer Assessment",
+        "url": "https://www.shl.com/fullstack-test",
+        "remote_testing": True,
+        "adaptive": True,
+        "test_types": ["Technical", "Programming"],
+        "description": "Comprehensive test covering Python, SQL, JavaScript and web development",
+        "duration": 60
+    },
+    {
+        "name": "Cognitive and Analytical Test",
+        "url": "https://www.shl.com/cognitive-test",
+        "remote_testing": True,
+        "adaptive": True,
+        "test_types": ["Cognitive", "Analytical"],
+        "description": "Assessment for problem-solving and analytical thinking abilities",
+        "duration": 45
+    },
+    {
+        "name": "Workplace Personality Inventory",
+        "url": "https://www.shl.com/personality-test",
+        "remote_testing": True,
+        "adaptive": False,
+        "test_types": ["Personality", "Behavioral"],
+        "description": "Evaluates workplace behaviors and collaboration style",
+        "duration": 30
+    },
+    {
+        "name": "Technical Skills Battery",
+        "url": "https://www.shl.com/tech-skills",
+        "remote_testing": True,
+        "adaptive": True,
+        "test_types": ["Technical", "Programming", "Problem Solving"],
+        "description": "Comprehensive assessment of programming languages and problem-solving skills",
+        "duration": 60
+    }
+]
+
+def init_vectorstore():
+    try:
+        print("Initializing vector store...")
+        
+        # Create vectorstore directory if it doesn't exist
+        os.makedirs("vectorstore", exist_ok=True)
+        
+        # Initialize model
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        
+        # Create embeddings
+        texts = [f"{a['name']} {a['description']} {' '.join(a['test_types'])}" for a in assessments]
+        embeddings = model.encode(texts)
+        embeddings = np.array(embeddings).astype('float32')
+        
+        # Create FAISS index
+        dimension = embeddings.shape[1]
+        index = faiss.IndexFlatL2(dimension)
+        index.add(embeddings)
+        
+        return index, model, assessments
+        
+    except Exception as e:
+        print(f"Error initializing vector store: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    init_vectorstore()
