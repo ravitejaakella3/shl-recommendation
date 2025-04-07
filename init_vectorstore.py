@@ -53,16 +53,31 @@ assessments = [
     }
 ]
 
+# Define model path
+MODEL_PATH = "models/all-MiniLM-L6-v2"
+
 def init_vectorstore():
     try:
         print("Initializing vector store...")
         
-        # Create vectorstore directory if it doesn't exist
+        # Create directories
         os.makedirs("vectorstore", exist_ok=True)
+        os.makedirs("models", exist_ok=True)
         
         # Initialize model
-        model = SentenceTransformer('all-MiniLM-L6-v2')
-        
+        try:
+            if os.path.exists(MODEL_PATH):
+                print("Loading model from local storage...")
+                model = SentenceTransformer(MODEL_PATH)
+            else:
+                print("Downloading model...")
+                model = SentenceTransformer('all-MiniLM-L6-v2')
+                print("Saving model locally...")
+                model.save(MODEL_PATH)
+        except Exception as e:
+            print(f"Error loading model: {str(e)}")
+            raise
+
         # Create embeddings
         texts = [f"{a['name']} {a['description']} {' '.join(a['test_types'])}" for a in assessments]
         embeddings = model.encode(texts)
