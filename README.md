@@ -2,6 +2,11 @@
 
 An intelligent recommendation system that helps hiring managers find the right SHL assessments based on their requirements. The system uses natural language processing to match job requirements with appropriate assessments.
 
+## Live Demo
+- **Web App**: [Try the Recommender]( https://shl-recommendation-f6j4zftdemqu2ssfjccyzy.streamlit.app/)
+- **API**: [Access the API](https://shl-recommendation-api-pqfw.onrender.com)
+- **API Docs**: [View Documentation](https://shl-recommendation-api-pqfw.onrender.com/docs)
+
 ## Features
 
 - 🔍 Natural language query support
@@ -16,15 +21,18 @@ An intelligent recommendation system that helps hiring managers find the right S
 
 - Python 3.10+
 - Streamlit for web interface
-- Sentence Transformers for NLP
+- Sentence Transformers (all-MiniLM-L6-v2)
 - FAISS for vector similarity search
 - FastAPI for REST endpoints
+- Docker for containerization
 
-## Installation
+## Local Development
+
+### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/shl-recommendation.git
+git clone https://github.com/ravitejaakella3/shl-recommendation
 cd shl-recommendation
 ```
 
@@ -44,38 +52,50 @@ pip install -r requirements.txt
 python init_vectorstore.py
 ```
 
-## Usage
+### Running Locally
 
 1. Start the Streamlit app:
 ```bash
 streamlit run app.py
 ```
 
-2. Access the web interface at http://localhost:8501
-
-3. Enter your requirements either as:
-   - Natural language description
-   - Job description URL
-
-4. Adjust the maximum assessment duration using the slider
-
-5. View recommended assessments with details:
-   - Assessment name and URL
-   - Remote testing support
-   - Adaptive/IRT support
-   - Test types
-   - Duration
+2. Start the API server:
+```bash
+python -m uvicorn api:app --reload --host 0.0.0.0 --port 8000
+```
 
 ## API Usage
 
-Start the API server:
+### Endpoints
+
+1. **Get Recommendations**
 ```bash
-python -m uvicorn api:app --reload
+curl "https://shl-recommendation-api.onrender.com/recommend?query=java%20developer&max_results=5"
 ```
 
-Access the API at http://localhost:8000:
-- API documentation: `/docs`
-- Recommendations endpoint: `/recommend?query=your_query_here`
+### Parameters
+- `query`: Search text or job description
+- `max_results`: Maximum number of results (1-10, default: 10)
+- `max_duration`: Maximum assessment duration in minutes (15-120, default: 60)
+
+### Example Response
+```json
+{
+    "query": "java developer",
+    "recommendations": [
+        {
+            "name": "Java Programming Test",
+            "url": "https://www.shl.com/java-test",
+            "remote_testing": true,
+            "adaptive": true,
+            "test_types": ["Technical", "Programming"],
+            "description": "Assessment for Java developers...",
+            "duration": 40
+        }
+    ],
+    "total_results": 1
+}
+```
 
 ## Project Structure
 
@@ -84,17 +104,24 @@ shl-recommendation/
 ├── app.py              # Streamlit web interface
 ├── api.py             # FastAPI backend
 ├── init_vectorstore.py # Vector store initialization
-├── requirements.txt    # Project dependencies
-└── vectorstore/       # Generated vector indices
-    ├── faiss_index.index
-    └── metadata.json
+├── Dockerfile         # Container configuration
+├── requirements.txt   # Project dependencies
+├── setup.sh          # Deployment setup script
+└── models/           # Model cache directory
+    └── cache/        # Sentence transformer cache
 ```
 
-## Evaluation Metrics
+## Docker Deployment
 
-The system's recommendation quality is measured using:
-- Mean Recall@3
-- Mean Average Precision (MAP@3)
+1. Build the container:
+```bash
+docker build -t shl-recommendation .
+```
+
+2. Run the container:
+```bash
+docker run -p 8000:8000 shl-recommendation
+```
 
 ## Contributing
 
@@ -107,8 +134,3 @@ The system's recommendation quality is measured using:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-Your Name - [your.email@example.com](mailto:your.email@example.com)
-Project Link: [https://github.com/yourusername/shl-recommendation](https://github.com/yourusername/shl-recommendation)
