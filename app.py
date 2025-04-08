@@ -10,14 +10,17 @@ from sentence_transformers import SentenceTransformer
 from bs4 import BeautifulSoup
 from typing import Union, List, Dict
 
-@st.cache_resource
+@st.cache_resource(show_spinner="Loading model...")
 def load_model_and_index():
     try:
         from init_vectorstore import init_vectorstore, assessments
         index, model, metadata = init_vectorstore()
         return model, index, metadata
     except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
+        if "429" in str(e):
+            st.error("Rate limit exceeded. The system will retry automatically in a few moments.")
+        else:
+            st.error(f"Error loading model: {str(e)}")
         return None, None, None
 
 def extract_text_from_url(url: str) -> str:

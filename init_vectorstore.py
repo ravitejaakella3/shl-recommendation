@@ -3,6 +3,10 @@ import faiss
 import json
 import numpy as np
 import os
+import time
+from huggingface_hub import hf_hub_download
+import requests
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 # Define sample SHL assessments
 assessments = [
@@ -53,8 +57,27 @@ assessments = [
     }
 ]
 
-# Define model path
-MODEL_PATH = "models/all-MiniLM-L6-v2"
+MODEL_NAME = 'all-MiniLM-L6-v2'
+MODEL_PATH = os.path.join('models', MODEL_NAME)
+CACHE_PATH = os.path.join('models', 'cache')
+
+@retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+def download_model():
+    try:
+        # Create cache directory
+        os.makedirs(CACHE_PATH, exist_ok=True)
+        
+        # Download model files
+        model = SentenceTransformer(MODEL_NAME, cache_folder=CACHE_PATH)
+        
+        # Save model locally
+        os.makedirs(MODEL_PATH, exist_ok=True)
+        model.save(MODEL_PATH)
+        
+        return model
+    except Exception as e:
+        print(f"Error downloading model: {str(e)}")
+        raise
 
 def init_vectorstore():
     try:
@@ -64,16 +87,14 @@ def init_vectorstore():
         os.makedirs("vectorstore", exist_ok=True)
         os.makedirs("models", exist_ok=True)
         
-        # Initialize model
+        # Initialize model with retries
         try:
             if os.path.exists(MODEL_PATH):
                 print("Loading model from local storage...")
                 model = SentenceTransformer(MODEL_PATH)
             else:
                 print("Downloading model...")
-                model = SentenceTransformer('all-MiniLM-L6-v2')
-                print("Saving model locally...")
-                model.save(MODEL_PATH)
+                model = download_model()
         except Exception as e:
             print(f"Error loading model: {str(e)}")
             raise
