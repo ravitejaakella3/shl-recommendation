@@ -5,4 +5,7 @@ __pycache__/
 venv/
 ENV/
 vectorstore/
-models/
+.streamlit/
+*.log
+download_model.py
+.cache/

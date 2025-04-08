@@ -3,10 +3,12 @@ import faiss
 import json
 import numpy as np
 import os
-import time
-from huggingface_hub import hf_hub_download
-import requests
+import logging
 from tenacity import retry, wait_exponential, stop_after_attempt
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Define sample SHL assessments
 assessments = [
@@ -57,30 +59,31 @@ assessments = [
     }
 ]
 
+# Model settings
 MODEL_NAME = 'all-MiniLM-L6-v2'
-MODEL_CACHE = 'models/cache'
-os.environ['HF_HUB_OFFLINE'] = '1'
+MODEL_CACHE = os.path.join('models', 'cache')
 
-@retry(wait=wait_exponential(multiplier=1, min=4, max=60), stop=stop_after_attempt(3))
-def load_or_download_model():
-    """Load model from cache or download if not available"""
+@retry(
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    stop=stop_after_attempt(3)
+)
+def load_model():
+    """Load or download the model"""
     try:
-        # Create cache directory
-        os.makedirs(MODEL_CACHE, exist_ok=True)
-        
-        # Initialize model with cache
+        logger.info(f"Loading/downloading model: {MODEL_NAME}")
         model = SentenceTransformer(MODEL_NAME, cache_folder=MODEL_CACHE)
         return model
     except Exception as e:
-        print(f"Error loading/downloading model: {str(e)}")
+        logger.error(f"Error with model: {str(e)}")
         raise
 
 def init_vectorstore():
     try:
-        print("Initializing vector store...")
+        logger.info("Initializing vector store...")
+        os.makedirs(MODEL_CACHE, exist_ok=True)
         
-        # Load or download model
-        model = load_or_download_model()
+        # Load model
+        model = load_model()
         
         # Create embeddings
         texts = [f"{a['name']} {a['description']} {' '.join(a['test_types'])}" for a in assessments]
@@ -92,10 +95,11 @@ def init_vectorstore():
         index = faiss.IndexFlatL2(dimension)
         index.add(embeddings)
         
+        logger.info("Vector store initialized successfully")
         return index, model, assessments
         
     except Exception as e:
-        print(f"Error initializing vector store: {str(e)}")
+        logger.error(f"Error in init_vectorstore: {str(e)}")
         raise
 
 if __name__ == "__main__":
