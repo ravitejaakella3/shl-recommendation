@@ -3,6 +3,12 @@ __pycache__
 *.pyo
 *.pyd
 .Python
+.env
+.venv
+venv/
+.git
+.gitignore
+README.md
 env
 pip-log.txt
 pip-delete-this-directory.txt
@@ -15,7 +21,4 @@ coverage.xml
 *.cover
 *.log
 .pytest_cache
-.env
-.venv
-venv
 ENV
