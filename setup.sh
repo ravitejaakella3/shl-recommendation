@@ -5,7 +5,13 @@ echo "Setting up environment..."
 # Create directories
 mkdir -p models/cache
 
-# Install dependencies
+# Upgrade pip first
+python -m pip install --upgrade pip
+
+# Install torch and torchvision first
+pip install --no-cache-dir torch==2.2.0 torchvision==0.17.0
+
+# Install other dependencies
 pip install --no-cache-dir -r requirements.txt
 
 # Set HF_HUB_OFFLINE=1 to prevent unnecessary API calls
@@ -36,13 +42,10 @@ except Exception as e:
         RETRY_COUNT=$((RETRY_COUNT+1))
         if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
             echo "Download failed. Waiting before retry..."
-            sleep 10
+            sleep 30
         fi
     fi
 done
-
-# Set permissions
-chmod -R 755 models/cache
 
 if [ "$SUCCESS" = false ]; then
     echo "Failed to download model after $MAX_RETRIES attempts"
