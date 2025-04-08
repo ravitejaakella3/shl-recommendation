@@ -58,26 +58,8 @@ assessments = [
 ]
 
 MODEL_NAME = 'all-MiniLM-L6-v2'
-MODEL_PATH = os.path.join('models', MODEL_NAME)
-CACHE_PATH = os.path.join('models', 'cache')
-
-@retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
-def download_model():
-    try:
-        # Create cache directory
-        os.makedirs(CACHE_PATH, exist_ok=True)
-        
-        # Download model files
-        model = SentenceTransformer(MODEL_NAME, cache_folder=CACHE_PATH)
-        
-        # Save model locally
-        os.makedirs(MODEL_PATH, exist_ok=True)
-        model.save(MODEL_PATH)
-        
-        return model
-    except Exception as e:
-        print(f"Error downloading model: {str(e)}")
-        raise
+MODEL_PATH = os.path.join('models', 'cache', 'model')
+os.environ['HF_HUB_OFFLINE'] = '1'
 
 def init_vectorstore():
     try:
@@ -85,20 +67,12 @@ def init_vectorstore():
         
         # Create directories
         os.makedirs("vectorstore", exist_ok=True)
-        os.makedirs("models", exist_ok=True)
+        os.makedirs("models/cache", exist_ok=True)
         
-        # Initialize model with retries
-        try:
-            if os.path.exists(MODEL_PATH):
-                print("Loading model from local storage...")
-                model = SentenceTransformer(MODEL_PATH)
-            else:
-                print("Downloading model...")
-                model = download_model()
-        except Exception as e:
-            print(f"Error loading model: {str(e)}")
-            raise
-
+        # Load model from local cache
+        print("Loading model from cache...")
+        model = SentenceTransformer(MODEL_PATH)
+        
         # Create embeddings
         texts = [f"{a['name']} {a['description']} {' '.join(a['test_types'])}" for a in assessments]
         embeddings = model.encode(texts)
