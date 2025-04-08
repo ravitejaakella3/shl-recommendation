@@ -58,20 +58,29 @@ assessments = [
 ]
 
 MODEL_NAME = 'all-MiniLM-L6-v2'
-MODEL_PATH = os.path.join('models', 'cache', 'model')
+MODEL_CACHE = 'models/cache'
 os.environ['HF_HUB_OFFLINE'] = '1'
+
+@retry(wait=wait_exponential(multiplier=1, min=4, max=60), stop=stop_after_attempt(3))
+def load_or_download_model():
+    """Load model from cache or download if not available"""
+    try:
+        # Create cache directory
+        os.makedirs(MODEL_CACHE, exist_ok=True)
+        
+        # Initialize model with cache
+        model = SentenceTransformer(MODEL_NAME, cache_folder=MODEL_CACHE)
+        return model
+    except Exception as e:
+        print(f"Error loading/downloading model: {str(e)}")
+        raise
 
 def init_vectorstore():
     try:
         print("Initializing vector store...")
         
-        # Create directories
-        os.makedirs("vectorstore", exist_ok=True)
-        os.makedirs("models/cache", exist_ok=True)
-        
-        # Load model from local cache
-        print("Loading model from cache...")
-        model = SentenceTransformer(MODEL_PATH)
+        # Load or download model
+        model = load_or_download_model()
         
         # Create embeddings
         texts = [f"{a['name']} {a['description']} {' '.join(a['test_types'])}" for a in assessments]
