@@ -70,7 +70,7 @@ python -m uvicorn api:app --reload --host 0.0.0.0 --port 8000
 
 1. **Get Recommendations**
 ```bash
-curl "https://shl-recommendation-api.onrender.com/recommend?query=java%20developer&max_results=5"
+curl "https://shl-recommendation-api-pqfw.onrender.com/recommend?query=java%20developer&max_results=5"
 ```
 
 ### Parameters
